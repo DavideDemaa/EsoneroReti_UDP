@@ -72,7 +72,7 @@ int main(int argc, char *argv[]){
 		return -1;
 	}
 
-	printf( "Waiting for a client to connect... \n");
+	printf( "In attesa di connessioni UDP... \n");
 
 	// RICEZIONE DELLA STRINGA ECHO DAL CLIENT
 	while(1) {

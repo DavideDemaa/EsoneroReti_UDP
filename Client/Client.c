@@ -32,7 +32,7 @@ WSACleanup();
 }
 
 
-int main(char args[]) {
+int main(int argc, char **argv) {
 #if defined WIN32
 	WSADATA wsaData;
 	int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -42,6 +42,16 @@ int main(char args[]) {
 		return EXIT_FAILURE;
 	}
 #endif
+
+const char *serverInfo = argv[1];
+char serverAddress[255];
+int serverPort;
+if (sscanf(serverInfo, "%[^:]:%d", serverAddress, &serverPort) != 2) {
+    printf("Invalid server address format. Use format: <server_name>:<port_number>\n");
+    return EXIT_FAILURE;
+}
+
+//printf("Server Address: %s\nServer Port: %d\n", serverAddress, serverPort);
 
 int sock;
 struct sockaddr_in echoServAddr;
@@ -59,11 +69,19 @@ int respStringLen;
 		return -1;
 	}
 
+	
+	struct hostent *host = gethostbyname(serverAddress);
+	if (host == NULL) {
+            ErrorHandler("gethostbyname() failed\n");
+            ClearWinSock();
+            return EXIT_FAILURE;
+    }
+    strcpy(serverAddress, inet_ntoa(*((struct in_addr *)host->h_addr_list[0])));
 	// COSTRUZIONE DELL'INDIRIZZO DEL SERVER
 	memset(&echoServAddr, 0, sizeof(echoServAddr));
 	echoServAddr.sin_family = PF_INET;
-	echoServAddr.sin_port = htons(PORT);
-	echoServAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+	echoServAddr.sin_port = htons(serverPort);
+	echoServAddr.sin_addr.s_addr = inet_addr(serverAddress);
 
 	// INVIO DELL'OPERAZIONE AL SERVER
 	memset(echoString, '\0', BUFFER_SIZE);
@@ -81,8 +99,6 @@ int respStringLen;
 
 	//Sending the string to the server
 	echoStringLen = strlen(echoString);
-	//printf("Waiting for connection --> ");
-	//printf("Connection established with %s:%d\n", inet_ntoa(echoServAddr.sin_addr), ntohs(echoServAddr.sin_port));
 	if (sendto(sock, echoString, echoStringLen, 0, (struct sockaddr*)&echoServAddr, sizeof(echoServAddr)) != echoStringLen){
 		ErrorHandler("send() sent a different number of bytes than expected");
 		closesocket(sock);
