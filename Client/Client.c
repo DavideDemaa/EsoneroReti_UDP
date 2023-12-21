@@ -82,7 +82,7 @@ int respStringLen;
 	//Sending the string to the server
 	echoStringLen = strlen(echoString);
 	//printf("Waiting for connection --> ");
-	printf("Connection established with %s:%d\n", inet_ntoa(echoServAddr.sin_addr), ntohs(echoServAddr.sin_port));
+	//printf("Connection established with %s:%d\n", inet_ntoa(echoServAddr.sin_addr), ntohs(echoServAddr.sin_port));
 	if (sendto(sock, echoString, echoStringLen, 0, (struct sockaddr*)&echoServAddr, sizeof(echoServAddr)) != echoStringLen){
 		ErrorHandler("send() sent a different number of bytes than expected");
 		closesocket(sock);
@@ -94,14 +94,13 @@ int respStringLen;
 	//loop that exchanges messages with the client until "=" is entered
 	while (strcmp(echoString, "=")!=0){
 		memset(echoBuffer, '\0', BUFFER_SIZE);
-		printf("Result: ");
 		if((respStringLen = recvfrom(sock, echoBuffer, BUFFER_SIZE, 0, (struct sockaddr*)&fromAddr, &fromSize)) <= 0){
 			ErrorHandler("recvfrom() failed or connection closed prematurely");
 			closesocket(sock);
 			ClearWinSock();
 			return -1;
 		}
-		printf("%s\n", echoBuffer); // prints the result of the operation
+		printf("Received result from server %s, ip %s: %s\n", inet_ntoa(fromAddr.sin_addr), inet_ntoa(fromAddr.sin_addr), echoBuffer);
 		system("pause");
 		system("cls");
 		memset(echoString, '\0', BUFFER_SIZE);

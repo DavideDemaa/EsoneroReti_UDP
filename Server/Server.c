@@ -17,6 +17,11 @@
 #include <stdlib.h>
 #include <ctype.h>
 
+#define HOSTNAME_SIZE 256  // O una dimensione appropriata in base alle tue esigenze
+
+// Dichiarazione della variabile clientHostName
+char clientHostName[HOSTNAME_SIZE];
+
 void ErrorHandler(char *errorMessage) {
 
 	printf(errorMessage);
@@ -94,9 +99,24 @@ int main(int argc, char *argv[]){
 			return -1;
 		}
 
-		printf("\nConnection established with %s:%d\n", inet_ntoa(echoClntAddr.sin_addr), ntohs(echoClntAddr.sin_port));
-		printf("Received: ");	// Setup to print the echoed string
-		printf("%s\n", echoBuffer);
+		// Ricezione del nome dell'host del client
+    	struct hostent *clientHost;
+    	clientHost = gethostbyaddr((const char *)&echoClntAddr.sin_addr.s_addr, sizeof(echoClntAddr.sin_addr.s_addr), AF_INET);
+
+    	if (clientHost == NULL) {
+        	ErrorHandler("gethostbyaddr() failed\n");
+        	system("pause");
+        	closesocket(sock);
+        	ClearWinSock();
+        	return -1;
+    	}
+
+    	// Copia il nome dell'host del client nella variabile clientHostName
+    	strncpy(clientHostName, clientHost->h_name, HOSTNAME_SIZE - 1);
+    	clientHostName[HOSTNAME_SIZE - 1] = '\0';
+
+    	// Visualizza il messaggio con il nome dell'host, l'indirizzo IP e l'operazione
+    	printf("Richiesta operazione '%s' dal client %s, IP %s\n", echoBuffer, clientHostName, inet_ntoa(echoClntAddr.sin_addr));
 
 		// receives strings from server until "=" is received
 		while(strcmp(echoBuffer,"=") != 0){
@@ -110,12 +130,11 @@ int main(int argc, char *argv[]){
 
 			if(num2==0 && op=='/')
 				strcpy(result_out, "inf");
-			else
-				sprintf(result_out, "%.3f", result);
-			// string_len = strlen(result_out);
+			/*else
+				sprintf(result_out, "%.3f", result);*/	
 
 			// INVIA IL RISULTATO AL CLIENT
-			int result_len = strlen(result_out);
+			int result_len = snprintf(result_out, sizeof(result_out), "%d %c %d = %.2f", num1, op, num2, result);
 			if (sendto(sock, result_out, result_len, 0, (struct sockaddr *)&echoClntAddr, sizeof(echoClntAddr)) != result_len){
 				ErrorHandler("\nsendto() sent a different number of bytes than expected\n");
 				system("pause");
@@ -133,8 +152,24 @@ int main(int argc, char *argv[]){
         		return -1;
     		}
 
-    		printf("Received: "); // Setup to print the echoed string
-    		printf("%s\n", echoBuffer);
+    		// Ricezione del nome dell'host del client
+    		struct hostent *clientHost;
+    		clientHost = gethostbyaddr((const char *)&echoClntAddr.sin_addr.s_addr, sizeof(echoClntAddr.sin_addr.s_addr), AF_INET);
+
+    		if (clientHost == NULL) {
+        		ErrorHandler("gethostbyaddr() failed\n");
+        		system("pause");
+        		closesocket(sock);
+        		ClearWinSock();
+        		return -1;
+    		}
+
+    		// Copia il nome dell'host del client nella variabile clientHostName
+    		strncpy(clientHostName, clientHost->h_name, HOSTNAME_SIZE - 1);
+    		clientHostName[HOSTNAME_SIZE - 1] = '\0';
+
+    		// Visualizza il messaggio con il nome dell'host, l'indirizzo IP e l'operazione
+    		printf("Richiesta operazione '%s' dal client %s, IP %s\n", echoBuffer, clientHostName, inet_ntoa(echoClntAddr.sin_addr));
 		}
 	}
 }
