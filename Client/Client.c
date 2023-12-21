@@ -100,7 +100,15 @@ int respStringLen;
 			ClearWinSock();
 			return -1;
 		}
-		printf("Received result from server %s, ip %s: %s\n", inet_ntoa(fromAddr.sin_addr), inet_ntoa(fromAddr.sin_addr), echoBuffer);
+
+		struct hostent *host = gethostbyaddr((const char *)&fromAddr.sin_addr.s_addr, sizeof(fromAddr.sin_addr.s_addr), AF_INET);
+
+		if (host != NULL) {
+			printf("Ricevuto risultato dal server %s, ip %s: %s\n", host->h_name, inet_ntoa(fromAddr.sin_addr), echoBuffer);
+		} else {
+    		printf("Unable to resolve server name\n");
+		}
+
 		system("pause");
 		system("cls");
 		memset(echoString, '\0', BUFFER_SIZE);
